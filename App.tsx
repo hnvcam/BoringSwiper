@@ -34,7 +34,10 @@ const App = () => {
           <Text>t1</Text>
         </View>
         <View style={{ backgroundColor: '#f50000', flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>t2</Text>
+          <Text>t2</Text>
+        </View>
+        <View style={{ backgroundColor: '#0000ff', flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text>t3</Text>
         </View>
       </BoringSwiper>
     </View>

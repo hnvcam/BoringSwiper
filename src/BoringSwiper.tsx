@@ -21,19 +21,35 @@ const BoringSwiper:FunctionComponent<BoringSwiperProps> = ({
   const storeLayout = useCallback((evt: LayoutChangeEvent) => {
     setPageWidth(evt.nativeEvent.layout.width)
   }, [])
-
-  const currentIndex = useRef(index)
+  const currentPage = useRef(0)
+  const swipedRight = useRef(false)
 
   const translateXs = useMemo(
     () => React.Children.map(children, () => new Animated.Value(0)),
-    [children]
+    [React.Children.count(children)]
   )
 
-  const nextPageIndex = useMemo(() => index < _.size(translateXs) - 1 ? index + 1 : 0, [index, children])
-  const prevPageIndex = useMemo(() => index > 0 ? index - 1 : _.size(translateXs) - 1, [index, children])
-  const currentPageTx = useMemo(() => -index * pageWidth, [index, pageWidth])
-  const nextPageBaseTx = useMemo(() => (index + 1 - nextPageIndex) * pageWidth, [index, pageWidth])
-  const prevPageBaseTx = useMemo(() => (index - 1 - prevPageIndex) * pageWidth, [index, pageWidth])
+  const getNext = useCallback(
+    (idx: number, page = 0) =>
+      idx < _.size(translateXs) - 1 ? [idx + 1, page] : [0, page + 1],
+    [translateXs]
+  )
+  const getPrev = useCallback(
+    (idx: number, page = 0) =>
+      idx > 0 ? [idx - 1, page] : [_.size(translateXs) - 1, page - 1],
+    [translateXs]
+  )
+  const getSwipeIn = useCallback(
+    (swipeRight: boolean) => swipeRight
+      ? getPrev(index, currentPage.current)
+      : getNext(index, currentPage.current),
+    [index, translateXs]
+  )
+  const getBaseTx = useCallback(
+    (idx: number, page: number) =>
+      (page - currentPage.current) * _.size(translateXs) * pageWidth - index * pageWidth,
+    [index, pageWidth, translateXs]
+  )
 
   const springAnimate = useCallback((items: {index: number, toValue: number}[]) => {
     const animations = _.reduce(items, (acc, value) => {
@@ -49,43 +65,39 @@ const BoringSwiper:FunctionComponent<BoringSwiperProps> = ({
     Animated.parallel(animations).start()
   }, [translateXs])
 
-  const reset = (dx: number) => {
-    const items = [{ index, toValue: currentPageTx }]
-    if (dx > 0) {
-      items.push({ index: prevPageIndex, toValue: prevPageBaseTx })
-    } else if (dx < 0) {
-      items.push({ index: nextPageIndex, toValue: nextPageBaseTx })
-    }
-    console.log(items)
-    springAnimate(items)
-  }
-
   const panResponder = useMemo(
     () => PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
       onPanResponderMove (e, { dx }) {
+        const currentPageTx = getBaseTx(index, currentPage.current)
         _.nth(translateXs, index)?.setValue(currentPageTx + dx)
 
-        if (dx < 0) {
-          _.nth(translateXs, nextPageIndex)?.setValue(nextPageBaseTx + dx)
-          if (prevPageIndex !== nextPageIndex) {
-            _.nth(translateXs, prevPageBaseTx)?.setValue(0)
-          }
-        } else if (dx > 0) {
-          _.nth(translateXs, prevPageIndex)?.setValue(prevPageBaseTx + dx)
-          if (nextPageIndex !== prevPageIndex) {
-            _.nth(translateXs, nextPageBaseTx)?.setValue(0)
-          }
+        if (dx === 0 || _.size(translateXs) <= 1) {
+          return
         }
+
+        const [showIndex, showPage] = getSwipeIn(dx > 0)
+        const showPageTx = getBaseTx(showIndex, showPage)
+        _.nth(translateXs, showIndex)?.setValue(showPageTx + dx)
       },
       onPanResponderRelease: (e, { dx }) => {
         let changedIndex = false
-        if (Math.abs(dx) > pageWidth / 3) {
-          changedIndex = onChangeIndex(dx > 0 ? prevPageIndex : nextPageIndex)
+        if (Math.abs(dx) > pageWidth / 3 && _.size(translateXs) > 1) {
+          const [newIndex, newPage] = getSwipeIn(dx > 0)
+          changedIndex = onChangeIndex(newIndex)
+          if (changedIndex) {
+            swipedRight.current = dx > 0
+            currentPage.current = newPage
+          }
         }
         if (!changedIndex) {
-          reset(dx)
+          const springs = [{ index, toValue: getBaseTx(index, currentPage.current) }]
+          if (_.size(translateXs) > 1) {
+            const [hideIndex, hidePage] = getSwipeIn(dx > 0)
+            springs.push({ index: hideIndex, toValue: getBaseTx(hideIndex, hidePage) })
+          }
+          springAnimate(springs)
         }
       },
       onPanResponderTerminationRequest: () => false
@@ -93,7 +105,12 @@ const BoringSwiper:FunctionComponent<BoringSwiperProps> = ({
     , [pageWidth, children])
 
   useEffect(() => {
-    console.log(currentIndex.current, index, currentPageTx, prevPageBaseTx)
+    const springs = [{ index, toValue: getBaseTx(index, currentPage.current) }]
+    if (_.size(translateXs) > 1) {
+      const [hideIndex, hidePage] = getSwipeIn(!swipedRight.current)
+      springs.push({ index: hideIndex, toValue: getBaseTx(hideIndex, hidePage) })
+    }
+    springAnimate(springs)
   }, [index])
 
   return (
@@ -127,8 +144,7 @@ const BoringSwiper:FunctionComponent<BoringSwiperProps> = ({
                 </Animated.View>
             ))}
         </Animated.View>
-    </View>
-  )
+    </View>)
 }
 
 export default BoringSwiper
