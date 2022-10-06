@@ -1,7 +1,7 @@
 {
-  "name": "BoringSwiper",
+  "name": "boring-swiper",
   "version": "1.0.0",
-  "private": true,
+  "private": false,
   "scripts": {
     "android": "react-native run-android --port=8089",
     "ios": "react-native run-ios --port=8089",
