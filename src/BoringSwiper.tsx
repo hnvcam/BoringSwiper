@@ -1,4 +1,4 @@
-import { View, ViewProps, LayoutChangeEvent, Animated, StyleProp, PanResponder } from 'react-native'
+import { View, ViewProps, LayoutChangeEvent, Animated, StyleProp, PanResponder, Dimensions } from 'react-native'
 import React, { FunctionComponent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import _ from 'lodash'
 
@@ -17,7 +17,7 @@ const BoringSwiper:FunctionComponent<BoringSwiperProps> = ({
   containerStyle,
   pageStyle
 }) => {
-  const [pageWidth, setPageWidth] = useState(0)
+  const [pageWidth, setPageWidth] = useState(Dimensions.get('window').width)
   const storeLayout = useCallback((evt: LayoutChangeEvent) => {
     setPageWidth(evt.nativeEvent.layout.width)
   }, [])
@@ -116,7 +116,7 @@ const BoringSwiper:FunctionComponent<BoringSwiperProps> = ({
   return (
     <View
         onLayout={storeLayout}
-        style={style}
+        style={[{ flexDirection: 'row' }, style]}
     >
         <Animated.View
             style={[
@@ -144,7 +144,8 @@ const BoringSwiper:FunctionComponent<BoringSwiperProps> = ({
                 </Animated.View>
             ))}
         </Animated.View>
-    </View>)
+    </View>
+  )
 }
 
 export default BoringSwiper

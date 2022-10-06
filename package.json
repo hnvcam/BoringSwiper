@@ -1,13 +1,15 @@
 {
   "name": "BoringSwiper",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "android": "react-native run-android --port=8089",
     "ios": "react-native run-ios --port=8089",
     "start": "react-native start --port=8089",
     "test": "jest",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "build": "tsc --project tsconfig.release.json && cp package.json README.md ./dist",
+    "clean": "rm -rf dist/"
   },
   "dependencies": {
     "lodash": "^4.17.21",

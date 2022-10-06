@@ -15,6 +15,7 @@ import {
 } from 'react-native'
 
 import BoringSwiper from './src/BoringSwiper'
+import BoringDots from './src/BoringDots'
 
 const App = () => {
   const [index, setIndex] = useState(0)
@@ -29,7 +30,8 @@ const App = () => {
         onChangeIndex={idx => {
           setIndex(idx)
           return true
-        }}>
+        }}
+        >
         <View style={{ backgroundColor: '#f5f5dc', flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <Text>t1</Text>
         </View>
@@ -40,6 +42,11 @@ const App = () => {
           <Text>t3</Text>
         </View>
       </BoringSwiper>
+      <BoringDots
+        count={3}
+        activeIndex={index}
+        style={{ position: 'absolute', left: 0, right: 0, bottom: 20, justifyContent: 'center' }}
+      />
     </View>
   )
 }
